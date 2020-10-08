@@ -7,7 +7,7 @@ struct node
 	struct node *left, *right;
 };
 
-struct node *insert(struct node *root, int data, char *path)
+struct node *insert(struct node *root, int data)
 {
 	if (root == NULL)
 	{
@@ -16,25 +16,58 @@ struct node *insert(struct node *root, int data, char *path)
 		new->left = new->right = NULL;
 		return new;
 	}
-	else if (path[0] == 'L')
-		root->left = insert(root->left, data, &path[1]);
+	else if (data <= root->data)
+		root->left = insert(root->left, data);
 	else
-		root->right = insert(root->right, data, &path[1]);
+		root->right = insert(root->right, data);
 	return root;
 }
 
-struct node *delete (struct node *root, char *path)
+struct node *delete (struct node *root, int data)
 {
-	if (root->left == NULL && root->right == NULL)
+	if (root->data == data)
 	{
-		free(root);
-		root = NULL;
+		if (root->left == NULL && root->right == NULL)
+		{
+			free(root);
+			return NULL;
+		}
+		if ((root->left == NULL) ^ (root->right == NULL))
+		{
+			struct node *temp;
+			if (root->left != NULL)
+				temp = root->left;
+			else
+				temp = root->right;
+			free(root);
+			return temp;
+		}
+		else if (root->left != NULL && root->right != NULL)
+		{
+			root->data = root->left->data;
+			root->left = delete (root->left, root->left->data);
+			return root;
+		}
 	}
-	else if (path[0] == 'L')
-		root->left = delete (root->left, &path[1]);
+	else if (root == NULL)
+		return NULL;
+	else if (data <= root->data)
+		root->left = delete (root->left, data);
 	else
-		root->right = delete (root->right, &path[1]);
+		root->right = delete (root->right, data);
 	return root;
+}
+
+int search(struct node *root, int data)
+{
+	if (root == NULL)
+		return 0;
+	else if (root->data == data)
+		return 1;
+	else if (data <= root->data)
+		return search(root->left, data);
+	else
+		return search(root->right, data);
 }
 
 void displayInOrder(struct node *root)
@@ -49,29 +82,24 @@ void displayInOrder(struct node *root)
 int main()
 {
 	struct node *root = NULL;
-	printf("-1 to Exit\n1 <element> <path with L&R> to insert\n2 <element> <path with L&R> to delete\n\n");
+	printf("-1 to Exit\n1 <element> to insert\n2 <element> to delete\n3 <element> to search\n\n");
 	while (1)
 	{
-		int choice;
+		int choice, element;
 		scanf("%d", &choice);
+		scanf("%d", &element);
 		if (choice == -1)
 			break;
 
 		if (choice == 1)
-		{
-			int e;
-			scanf("%d", &e);
-			char path[10] = {'\0'};
-			if (root != NULL)
-				scanf("%s", path);
-			root = insert(root, e, path);
-		}
+			root = insert(root, element);
 		else if (choice == 2)
-		{
-			char path[10];
-			scanf("%s", path);
-			root = delete (root, path);
-		}
+			root = delete (root, element);
+		else if (choice == 3)
+			if (search(root, element))
+				printf("%d is present in the tree\n", element);
+			else
+				printf("%d is not present in the tree\n", element);
 		printf("Current Tree (inOrder): ");
 		displayInOrder(root);
 		printf("\n\n");
